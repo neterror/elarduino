@@ -1,0 +1,3 @@
+* Config options should be automatically imported from preferences.txt and boards.txt
+* User preferences (for example, where is the library path) should be readable both from the standard preferences.txt file in Arduino.app folder and from the user preferences.txt file in ~/Library/Arduino16
+

@@ -13,5 +13,15 @@
 (defvar elar-compiler-options (list "-c" "-g" "-Os" "-w" "-fno-exceptions" "-ffunction-sections" "-fdata-sections"  "-fno-threadsafe-statics" "-MMD" " ")
   "TODO: The compiler options should be taken from some config file")
   
+leonardo.build.mcu=atmega32u4
+leonardo.build.f_cpu=16000000L
+leonardo.build.vid=0x2341
+leonardo.build.pid=0x8036
+leonardo.build.usb_product="Arduino Leonardo"
+leonardo.build.board=AVR_LEONARDO
+leonardo.build.core=arduino
+leonardo.build.variant=leonardo
+leonardo.build.extra_flags={build.usb_flags}
+
 
 (provide 'lr-config)
