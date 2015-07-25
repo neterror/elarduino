@@ -79,24 +79,16 @@ Intern the board in the lr-config array"
 
 
 ;;todo -- append the arduino version taken from platform.txt as "-DARDUINO=10601"
-(defun lr-config-build(board)
+(defun lr-board-options(board)
   (list (concat "-mmcu=" (lr-config-get board "build/mcu"))
         (concat "-DF_CPU=" (lr-config-get board "build/mcu"))
         (concat "-DARDUINO_" (lr-config-get board "build/board"))
         (concat "-DARDUINO=" (lr-format-version (lr-config-version)))
         "-DARDUINO_ARCH_AVR"))
 
-
-(defvar elar-compiler-options (list "-c" "-g" "-Os" "-w" "-fno-exceptions" "-ffunction-sections" "-fdata-sections"  "-fno-threadsafe-statics" "-MMD" " ")
-  "TODO: The compiler options should be taken from some config file")
+(defun lr-compiler-options()
+  (list (concat (lr-config-get "compiler" "cpp/flags"))))
 
 (lr-config-init)
-(lr-config-build "leonardo")
-
-
-
-
-
-
-
-
+(lr-board-options "leonardo")
+(lr-compiler-options) 
