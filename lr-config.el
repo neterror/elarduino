@@ -2,7 +2,7 @@
 (require 'lr-util)
 
 (setq lexical-binding t)
-(defvar lr-config-obarray (make-vector 1024 nil)
+(defvar lr-config-obarray (make-vector 4096 nil)
   "Obarray for the symbols, that represent all possible config options. 
 The config options for each board are set in property lists for for their symbol")
 
@@ -10,24 +10,9 @@ The config options for each board are set in property lists for for their symbol
 (defcustom lr-arduino-app  "/Applications/Arduino.app/"
   "Base directory of Arduino IDE")
 
-(defvar lr-avr-bin (concat lr-arduino-app "/Contents/Resources/Java/hardware/tools/avr/bin")
-  "Path to avr-gcc binaries")
-                             
-(defvar lr-avr-base (concat lr-arduino-app "/Contents/Resources/Java/hardware/arduino/avr/")
+(defvar lr-arduino-base (concat lr-arduino-app "Contents/Resources/Java/")
   "Base path to avr-gcc include dir")
 
-
-(defun lr-load-file (f)
-  "Loads file contents and returns it as string"
-  (with-temp-buffer
-    (insert-file-contents f)
-    (buffer-substring-no-properties
-       (point-min)
-       (point-max))))
-
-(defun lr-split-lines(string)
-  "Load file contents and returns it as list of lines"
-  (split-string string "[\r\n]" t))
 
 (defun lr-tokenize-line(line)
   "Tokenize single line which is not comment"
@@ -54,41 +39,45 @@ Intern the board in the lr-config array"
   (mapcar #'lr-intern-tokens (lr-file-tokens file-name)))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;; API calls
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun lr-config-init()
-  "Loads the boards.txt and platform.txt files from Arduino directory"
-  (setq lr-config-obarray (make-vector 128 nil))
-  (lr-parse-file (concat lr-avr-base "boards.txt"))
-  (lr-parse-file (concat lr-avr-base "platform.txt"))
-  (lr-config-version))
-
-(defun lr-config-get (option value)
-  (car (get (intern-soft option lr-config-obarray) (intern value lr-config-obarray))))
-
 (defun lr-format-version(version)
   (let ((tokens (split-string version "[.]")))
     (format "%d%.2d%.2d"
             (string-to-number (nth 0 tokens))
             (string-to-number (nth 1 tokens))
             (string-to-number (nth 2 tokens)))))
-  
-(defun lr-config-version()
+
+(defun lr-board-options(board)
+  (concat-with " "
+               (list (concat "-mmcu=" (lr-config-get board "build/mcu"))
+                     (concat "-DF_CPU=" (lr-config-get board "build/mcu"))
+                     (concat "-DARDUINO_" (lr-config-get board "build/board"))
+                     (concat "-DARDUINO=" (lr-format-version (lr-config-get "version" "value")))
+                     (lr-config-get "compiler" "cpp/flags")
+                     "-DARDUINO_ARCH_AVR")))
+
+(defun lr-avr-tool(tool)
+  "Returns the fullpath to the tools cpp, ar, objcopy, elf2hex, size"
+  (concat lr-arduino-base "hardware/tools/avr/bin/" (lr-config-get "compiler" (concat tool "/cmd"))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; API calls
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun lr-config-init()
+  "Loads the boards.txt and platform.txt files from Arduino directory"
+  (lr-parse-file (concat lr-arduino-base "hardware/arduino/avr/boards.txt"))
+  (lr-parse-file (concat lr-arduino-base "hardware/arduino/avr/platform.txt"))
   (lr-config-get "version" "value"))
 
+(defun lr-config-get(option value)
+  (car (get (intern-soft option lr-config-obarray) (intern value lr-config-obarray))))
+  
 
-;;todo -- append the arduino version taken from platform.txt as "-DARDUINO=10601"
-(defun lr-board-options(board)
-  (list (concat "-mmcu=" (lr-config-get board "build/mcu"))
-        (concat "-DF_CPU=" (lr-config-get board "build/mcu"))
-        (concat "-DARDUINO_" (lr-config-get board "build/board"))
-        (concat "-DARDUINO=" (lr-format-version (lr-config-version)))
-        "-DARDUINO_ARCH_AVR"))
 
-(defun lr-compiler-options()
-  (list (concat (lr-config-get "compiler" "cpp/flags"))))
+;; (defun includes() 
+;;   (let ((libraries (mapcar #'(lambda(x) (concat (lr-sub-directories (concat lr-arduino-base "libraries/"))))
 
-(lr-config-init)
-(lr-board-options "leonardo")
-(lr-compiler-options) 
+;;  (let ((paths (list "cores/arduino" "variants/leonardo" "libraries/SPI")))
+;;     (mapcar (lambda(x) (concat "-I" *headers-base-path* x " ")) paths)))
+
+
+(provide 'lr-config)

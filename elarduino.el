@@ -6,13 +6,6 @@
 (require 'lr-util)
 (require 'lr-config)
 
-(defun avr(prog)
-  (concat *avr-bin-path* "/" prog))
-
-(defun includes()
-  (let ((paths (list "cores/arduino" "variants/leonardo" "libraries/SPI")))
-    (mapcar (lambda(x) (concat "-I" *headers-base-path* x " ")) paths)))
-
 
 (defun compile-options(file)
   (concat-with (" " avr "avr-g++")
