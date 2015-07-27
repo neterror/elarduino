@@ -30,7 +30,7 @@ The config options for each board are set in property lists for for their symbol
   "Given a single line with tokens, the first item is the board, the last is the value, the middle is the option name
 Intern the board in the lr-config array"
   (let* ((option-name (intern (car line-tokens) lr-config-obarray))
-        (value (or (concat-with "/" (butlast (cdr line-tokens))) "value"))
+        (value (or (mapconcat #'identity (butlast (cdr line-tokens)) "/") "value"))
         (option-value (intern value lr-config-obarray)))
     (put option-name option-value (last line-tokens))))
 
@@ -47,13 +47,14 @@ Intern the board in the lr-config array"
             (string-to-number (nth 2 tokens)))))
 
 (defun lr-board-options(board)
-  (concat-with " "
+  (mapconcat #'identity 
                (list (concat "-mmcu=" (lr-config-get board "build/mcu"))
                      (concat "-DF_CPU=" (lr-config-get board "build/mcu"))
                      (concat "-DARDUINO_" (lr-config-get board "build/board"))
                      (concat "-DARDUINO=" (lr-format-version (lr-config-get "version" "value")))
                      (lr-config-get "compiler" "cpp/flags")
-                     "-DARDUINO_ARCH_AVR")))
+                   "-DARDUINO_ARCH_AVR")
+      " "))
 
 (defun lr-avr-tool(tool)
   "Returns the fullpath to the tools cpp, ar, objcopy, elf2hex, size"
