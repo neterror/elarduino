@@ -2,6 +2,7 @@
 (require 'lr-util)
 
 (setq lexical-binding t)
+
 (defvar lr-config-obarray (make-vector 4096 nil)
   "Obarray for the symbols, that represent all possible config options. 
 The config options for each board are set in property lists for for their symbol")
@@ -30,7 +31,7 @@ The config options for each board are set in property lists for for their symbol
   "Given a single line with tokens, the first item is the board, the last is the value, the middle is the option name
 Intern the board in the lr-config array"
   (let* ((option-name (intern (car line-tokens) lr-config-obarray))
-        (value (or (mapconcat #'identity (butlast (cdr line-tokens)) "/") "value"))
+        (value (or (concat-with "/" (butlast (cdr line-tokens))) "value"))
         (option-value (intern value lr-config-obarray)))
     (put option-name option-value (last line-tokens))))
 
@@ -47,14 +48,14 @@ Intern the board in the lr-config array"
             (string-to-number (nth 2 tokens)))))
 
 (defun lr-board-options(board)
-  (mapconcat #'identity 
+  (concat-with " "
                (list (concat "-mmcu=" (lr-config-get board "build/mcu"))
                      (concat "-DF_CPU=" (lr-config-get board "build/mcu"))
                      (concat "-DARDUINO_" (lr-config-get board "build/board"))
                      (concat "-DARDUINO=" (lr-format-version (lr-config-get "version" "value")))
                      (lr-config-get "compiler" "cpp/flags")
-                   "-DARDUINO_ARCH_AVR")
-      " "))
+                   "-DARDUINO_ARCH_AVR")))
+
 
 (defun lr-avr-tool(tool)
   "Returns the fullpath to the tools cpp, ar, objcopy, elf2hex, size"
@@ -73,6 +74,9 @@ Intern the board in the lr-config array"
   (car (get (intern-soft option lr-config-obarray) (intern value lr-config-obarray))))
   
 
+(lr-config-init)
+
+
 
 ;; (defun includes() 
 ;;   (let ((libraries (mapcar #'(lambda(x) (concat (lr-sub-directories (concat lr-arduino-base "libraries/"))))
@@ -80,5 +84,9 @@ Intern the board in the lr-config array"
 ;;  (let ((paths (list "cores/arduino" "variants/leonardo" "libraries/SPI")))
 ;;     (mapcar (lambda(x) (concat "-I" *headers-base-path* x " ")) paths)))
 
+
+(defun concat-with(separator list)
+    (let ((result (mapconcat #'identity list separator)))
+        (if (zerop (length result)) nil result)))
 
 (provide 'lr-config)

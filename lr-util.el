@@ -1,6 +1,3 @@
-(setq lisp-indent-offset 4)
-(modify-syntax-entry ?- "w" emacs-lisp-mode-syntax-table)
-
 (defun lr-load-file (f)
     "Loads file contents and returns it as string"
     (with-temp-buffer
@@ -19,9 +16,9 @@
 in the form drwx___rwx"
     (eq (elt (nth 9 attributes) 0) ?d))
 
-(defun directory-tree (root)
+(defun lr-directory-tree (root)
     (let (result)
-        (defun directories-in (dir)
+        (defun lr-directories-in (dir)
             (let ((paths (lr-sub-directories (car dir))))
                 (setq result (append result paths))
                 (while (car paths)
@@ -35,11 +32,11 @@ in the form drwx___rwx"
     (if base-path
         (mapcar #'car (remove-if-not #'lr-directory-p (directory-files-and-attributes base-path t "^[^.]")))))
 
-(defun source-files(dir)
-    (let ((dirs (cons dir (directory-tree dir))))
-        (remove-if #'null (mapcar #'(lambda(x)(directory-files x t "\\.cpp$\\|\\.c$\\|\\.h$")) dirs))))
-
-(source-files "/Users/plamen/amazon/")
-
+(defun lr-flat(list)
+    (if list
+        (if (consp (car list))
+            (append (flat (car list)) (flat (cdr list)))
+            (cons (car list) (flat (cdr list))))))
 
 (provide 'lr-util)
+
