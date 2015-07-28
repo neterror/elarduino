@@ -23,25 +23,27 @@ for the compiler"
     
 (defun lr-library-sources(library-paths)
     "Returns hashmap, with key full path to library, value is list of headers (without path) and sources(with full path)"
-    (let ((library-sources (make-hash-table :test #'equal)))
-        (mapc #'(lambda(x)
-                    (puthash x (lr-library-files x) library-sources)) library-paths)
-        library-sources))
-                          
+    (mapcar #'(lambda(x)
+                  (cons x (lr-library-files x))) library-paths))
+
+(defun lr-find-header-internal(libraries header)
+    (if libraries
+        (if (member header (car libraries) )
+            (car libraries)
+            (lr-find-header-internal (cdr libraries) header))))
+
+(defun lr-header-finder()
+    (let ((library-sources (lr-library-sources (lr-arduino-libraries))))
+        (lambda(header)
+            (lr-find-header-internal library-sources header))))
+
+(setq fn-find-header (lr-header-finder))
+
+(funcall fn-find-header "SPI.h")
 
 
-(defun lr-library-find()
-    (let* ((libraries (lr-arduino-libraries))
-              (sources (lr-library-sources libraries)))
-        (lambda(library)
-            (gethash library sources))))
-
-(setq finder (lr-library-find))
 
 
-(funcall finder "/Applications/Arduino.app/Contents/Resources/Java/hardware/arduino/avr/libraries/EEPROM")
 
-    
-(setq *sources* (lr-library-sources))
 
-(maphash #'(lambda(key value) (print key) (print value)) *sources*)
+
