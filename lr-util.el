@@ -35,8 +35,8 @@ in the form drwx___rwx"
 (defun lr-flat(list)
     (if list
         (if (consp (car list))
-            (append (flat (car list)) (flat (cdr list)))
-            (cons (car list) (flat (cdr list))))))
+            (append (lr-flat (car list)) (lr-flat (cdr list)))
+            (cons (car list) (lr-flat (cdr list))))))
 
 (provide 'lr-util)
 
