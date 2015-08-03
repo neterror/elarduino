@@ -39,6 +39,7 @@
 ;;example usage
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (setq fn-find-header (lr-header-finder))
-(funcall fn-find-header "SPI.h")
+(funcall fn-find-header "EEPROM.h")
 
 
+(provide 'lr-libraries)

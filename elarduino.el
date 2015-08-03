@@ -5,5 +5,5 @@
 
 (require 'lr-util)
 (require 'lr-config)
-
+(require 'lr-libraries)
 
