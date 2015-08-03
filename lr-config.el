@@ -1,19 +1,18 @@
+; -*- lexical-binding: t -*-
+
 (require 'cl)
 (require 'lr-util)
-
-(setq lexical-binding t)
 
 (defvar lr-config-obarray (make-vector 4096 nil)
   "Obarray for the symbols, that represent all possible config options. 
 The config options for each board are set in property lists for for their symbol")
 
-
-(defcustom lr-arduino-app  "/Applications/Arduino.app/"
+(defcustom lr-arduino-app  "/home/plamen/arduino-1.6.5/"
   "Base directory of Arduino IDE")
 
-(defvar lr-arduino-base (concat lr-arduino-app "Contents/Resources/Java/")
-  "Base path to avr-gcc include dir")
-
+(defun lr-arduino-base()
+  (cond ((string-prefix-p "gnu" (symbol-name system-type)) lr-arduino-app)
+	((string=       "darwin"(symbol-name system-type)) (concat lr-arduino-app "Contents/Resources/Java/"))))
 
 (defun lr-tokenize-line(line)
   "Tokenize single line which is not comment"
@@ -31,7 +30,7 @@ The config options for each board are set in property lists for for their symbol
   "Given a single line with tokens, the first item is the board, the last is the value, the middle is the option name
 Intern the board in the lr-config array"
   (let* ((option-name (intern (car line-tokens) lr-config-obarray))
-        (value (or (concat-with "/" (butlast (cdr line-tokens))) "value"))
+        (value (or (mapconcat #'identity (butlast (cdr line-tokens)) "/") "value"))
         (option-value (intern value lr-config-obarray)))
     (put option-name option-value (last line-tokens))))
 
@@ -48,26 +47,26 @@ Intern the board in the lr-config array"
             (string-to-number (nth 2 tokens)))))
 
 (defun lr-board-options(board)
-  (concat-with " "
-               (list (concat "-mmcu=" (lr-config-get board "build/mcu"))
-                     (concat "-DF_CPU=" (lr-config-get board "build/mcu"))
-                     (concat "-DARDUINO_" (lr-config-get board "build/board"))
-                     (concat "-DARDUINO=" (lr-format-version (lr-config-get "version" "value")))
-                     (lr-config-get "compiler" "cpp/flags")
-                   "-DARDUINO_ARCH_AVR")))
+  (mapconcat #'identity
+	     (list (concat "-mmcu=" (lr-config-get board "build/mcu"))
+		   (concat "-DF_CPU=" (lr-config-get board "build/mcu"))
+		   (concat "-DARDUINO_" (lr-config-get board "build/board"))
+		   (concat "-DARDUINO=" (lr-format-version (lr-config-get "version" "value")))
+		   (lr-config-get "compiler" "cpp/flags")
+                   "-DARDUINO_ARCH_AVR") " "))
 
 
 (defun lr-avr-tool(tool)
   "Returns the fullpath to the tools cpp, ar, objcopy, elf2hex, size"
-  (concat lr-arduino-base "hardware/tools/avr/bin/" (lr-config-get "compiler" (concat tool "/cmd"))))
+  (concat (lr-arduino-base) "hardware/tools/avr/bin/" (lr-config-get "compiler" (concat tool "/cmd"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;; API calls
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun lr-config-init()
   "Loads the boards.txt and platform.txt files from Arduino directory"
-  (lr-parse-file (concat lr-arduino-base "hardware/arduino/avr/boards.txt"))
-  (lr-parse-file (concat lr-arduino-base "hardware/arduino/avr/platform.txt"))
+  (lr-parse-file (concat (lr-arduino-base) "hardware/arduino/avr/boards.txt"))
+  (lr-parse-file (concat (lr-arduino-base) "hardware/arduino/avr/platform.txt"))
   (lr-config-get "version" "value"))
 
 (defun lr-config-get(option value)
@@ -90,3 +89,5 @@ Intern the board in the lr-config array"
         (if (zerop (length result)) nil result)))
 
 (provide 'lr-config)
+
+

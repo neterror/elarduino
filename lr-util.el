@@ -22,9 +22,9 @@ in the form drwx___rwx"
             (let ((paths (lr-sub-directories (car dir))))
                 (setq result (append result paths))
                 (while (car paths)
-                    (directories-in paths)
+                    (lr-directories-in paths)
                     (setq paths (cdr paths)))))
-        (directories-in (list root))
+        (lr-directories-in (list root))
         (append (list root) result)))
 
 
